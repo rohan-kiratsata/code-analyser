@@ -1,12 +1,15 @@
 const simpleGit = require("simple-git");
 const fs = require("fs-extra");
 const path = require("path");
+const axios = require("axios");
 
 async function analyzeRepo(repoUrl) {
   try {
     const [, owner, repo] = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
     const tempDir = path.join(__dirname, "temp", `${owner}-${repo}`);
     await fs.ensureDir(tempDir);
+
+    const repoInfo = await fetchRepoInfo(owner, repo);
 
     await simpleGit().clone(repoUrl, tempDir);
 
@@ -20,6 +23,11 @@ async function analyzeRepo(repoUrl) {
     await fs.remove(tempDir);
 
     return {
+      owner,
+      name: repo,
+      description: repoInfo.description,
+      stars: repoInfo.stargazers_count,
+      forks: repoInfo.forks_count,
       dependencies: Object.keys(dependencies),
       devDependencies: Object.keys(devDependencies),
       size: formatBytes(size),
@@ -29,6 +37,19 @@ async function analyzeRepo(repoUrl) {
   }
 }
 
+// Uses github api to fetch repo details
+async function fetchRepoInfo(owner, repo) {
+  try {
+    const response = await axios.get(
+      `https://api.github.com/repos/${owner}/${repo}`
+    );
+    return response.data;
+  } catch (error) {
+    throw new Error(`Error fetching repository info: ${error.message}`);
+  }
+}
+
+// calculates the size of project directory
 async function calculateDirectorySize(directoryPath) {
   const files = await fs.readdir(directoryPath, { withFileTypes: true });
   let size = 0;
