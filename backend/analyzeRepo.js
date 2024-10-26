@@ -4,9 +4,17 @@ const path = require("path");
 const axios = require("axios");
 
 async function analyzeRepo(repoUrl) {
+  let tempDir;
   try {
     const [, owner, repo] = repoUrl.match(/github\.com\/([^\/]+)\/([^\/]+)/);
-    const tempDir = path.join(__dirname, "temp", `${owner}-${repo}`);
+    tempDir = path.join(__dirname, "temp", `${owner}-${repo}`);
+
+    // Check if the directory already exists
+    if (await fs.pathExists(tempDir)) {
+      // Remove the existing directory
+      await fs.remove(tempDir);
+    }
+
     await fs.ensureDir(tempDir);
 
     const repoInfo = await fetchRepoInfo(owner, repo);
@@ -14,15 +22,23 @@ async function analyzeRepo(repoUrl) {
     await simpleGit().clone(repoUrl, tempDir);
 
     const packageJsonPath = path.join(tempDir, "package.json");
+    if (!(await fs.pathExists(packageJsonPath))) {
+      throw new Error("Not a Node.js repository: package.json not found");
+    }
+
     const packageJson = await fs.readJson(packageJsonPath);
     const dependencies = packageJson.dependencies || {};
     const devDependencies = packageJson.devDependencies || {};
 
+    // Check if the repository contains only package.json
+    const files = await fs.readdir(tempDir);
+    if (files.length === 1 && files[0] === "package.json") {
+      throw new Error("Invalid repository: Contains only package.json");
+    }
+
     const size = await calculateDirectorySize(tempDir);
 
-    await fs.remove(tempDir);
-
-    return {
+    const result = {
       owner,
       name: repo,
       description: repoInfo.description,
@@ -32,12 +48,28 @@ async function analyzeRepo(repoUrl) {
       devDependencies: Object.keys(devDependencies),
       size: formatBytes(size),
     };
+
+    // Schedule temp directory deletion after response is sent
+    process.nextTick(() => {
+      fs.remove(tempDir).catch((err) =>
+        console.error("Error deleting temp directory:", err)
+      );
+    });
+
+    return result;
   } catch (error) {
+    // Ensure temp directory is deleted in case of error
+    if (tempDir) {
+      await fs
+        .remove(tempDir)
+        .catch((err) => console.error("Error deleting temp directory:", err));
+    }
     throw new Error(`Error analyzing repository: ${error.message}`);
   }
 }
 
 // Uses github api to fetch repo details
+// !IMPORTANT : potential issue: rate limiting api hits. maybe add auth in future
 async function fetchRepoInfo(owner, repo) {
   try {
     const response = await axios.get(
@@ -66,7 +98,7 @@ async function calculateDirectorySize(directoryPath) {
 
   return size;
 }
-
+// cals size of project
 function formatBytes(bytes, decimals = 2) {
   if (bytes === 0) return "0 Bytes";
   const k = 1024;

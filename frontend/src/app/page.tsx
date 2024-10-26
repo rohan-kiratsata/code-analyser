@@ -91,6 +91,23 @@ function App() {
                   ))}
                 </ul>
               </div>
+              {/* <div className="mb-5">
+                <h3 className="text-xl font-semibold mb-2">
+                  Dependencies Graph:
+                </h3>
+                <DependencyGraph
+                  dependencies={[
+                    ...analysis.dependencies.map((dep: string) => ({
+                      name: dep,
+                      size: 100,
+                    })),
+                    ...analysis.devDependencies.map((dep: string) => ({
+                      name: dep,
+                      size: 50,
+                    })),
+                  ]}
+                />
+              </div> */}
               <div>
                 <h3 className="text-xl font-semibold mb-2">Project Size:</h3>
                 <p>{analysis.size}</p>
