@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 function App() {
@@ -8,116 +8,113 @@ function App() {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setShowLoading(true);
     setError(null);
     setAnalysis(null);
+    setAnalysisComplete(false);
 
     try {
       const response = await axios.post("http://localhost:5000/analyze", {
         repoUrl,
       });
       setAnalysis(response.data);
+      setAnalysisComplete(true);
     } catch (error: any) {
       setError(error.response?.data?.error || "An error occurred");
-    } finally {
-      setLoading(false);
+      setShowLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-          <h1 className="text-3xl font-bold mb-5 text-center">
-            GitHub Repo Analyzer
-          </h1>
-          <form onSubmit={handleSubmit} className="mb-5">
-            <input
-              type="text"
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="Enter GitHub repo URL"
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-3 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:opacity-50"
-            >
-              {loading ? "Analyzing..." : "Analyze"}
-            </button>
-          </form>
-          {error && <p className="text-red-500 mb-5">{error}</p>}
-          {analysis && (
-            <div className="analysis">
-              <h2 className="text-2xl font-semibold mb-3">Analysis Results</h2>
-              <div className="mb-5">
-                <h3 className="text-xl font-semibold mb-2">Repository Info:</h3>
-                <p>
-                  <strong>Owner:</strong> {analysis.owner}
-                </p>
-                <p>
-                  <strong>Name:</strong> {analysis.name}
-                </p>
-                <p>
-                  <strong>Description:</strong> {analysis.description}
-                </p>
-                <p>
-                  <strong>Stars:</strong> {analysis.stars}
-                </p>
-                <p>
-                  <strong>Forks:</strong> {analysis.forks}
-                </p>
-              </div>
-              <div className="mb-5">
-                <h3 className="text-xl font-semibold mb-2">Dependencies:</h3>
-                <ul className="list-disc list-inside">
-                  {analysis.dependencies.map((dep: string) => (
-                    <li key={dep}>{dep}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mb-5">
-                <h3 className="text-xl font-semibold mb-2">
-                  Dev Dependencies:
-                </h3>
-                <ul className="list-disc list-inside">
-                  {analysis.devDependencies.map((dep: string) => (
-                    <li key={dep}>{dep}</li>
-                  ))}
-                </ul>
-              </div>
-              {/* <div className="mb-5">
-                <h3 className="text-xl font-semibold mb-2">
-                  Dependencies Graph:
-                </h3>
-                <DependencyGraph
-                  dependencies={[
-                    ...analysis.dependencies.map((dep: string) => ({
-                      name: dep,
-                      size: 100,
-                    })),
-                    ...analysis.devDependencies.map((dep: string) => ({
-                      name: dep,
-                      size: 50,
-                    })),
-                  ]}
-                />
-              </div> */}
-              <div>
-                <h3 className="text-xl font-semibold mb-2">Project Size:</h3>
-                <p>{analysis.size}</p>
-              </div>
-            </div>
-          )}
-        </div>
+    <>
+      <div className="flex w-full justify-between mt-10">
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col items-center w-full"
+        >
+          <input
+            type="text"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            placeholder="GitHub repo URL"
+            required
+            className="w-[400px] px-3 py-2 border border-neutral-700 placeholder-neutral-500 text-white rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-700"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 transition-all ease-in-out rounded-md w-[400px] mt-3 text-white font-medium"
+          >
+            {/* {loading ? "Analyzing..." : "Analyze"} */}
+            Analyze
+          </button>
+        </form>
       </div>
-    </div>
+      {showLoading ? (
+        <div className="w-full flex items-center justify-center my-28">
+          <LoadingSplash onComplete={() => setShowLoading(false)} />
+        </div>
+      ) : (
+        <>Hi show anaylsis</>
+      )}
+    </>
   );
 }
 
 export default App;
+
+const LoadingSplash = ({ onComplete }: { onComplete: () => void }) => {
+  const [messageIndex, setMessageIndex] = useState(0);
+  const messages = [
+    "Cloning Repo...",
+    "Analyzing Dependencies...",
+    "Generating Report...",
+    "Almost Done...",
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => {
+        if (prev === messages.length - 1) {
+          clearInterval(interval);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (messageIndex === messages.length - 1) {
+      const timer = setTimeout(() => {
+        onComplete();
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [messageIndex, onComplete]);
+
+  return (
+    <>
+      <div className="flex items-center flex-col justify-center">
+        <div className="">
+          <div className="loader">
+            <span className="bar"></span>
+            <span className="bar"></span>
+            <span className="bar"></span>
+          </div>
+        </div>
+        <span className="text-lg font-semibold text-white">
+          {messages[messageIndex]}
+        </span>
+      </div>
+    </>
+  );
+};
