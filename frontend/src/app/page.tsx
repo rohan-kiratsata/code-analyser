@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { LoadingSplash } from "@/components/loading-splash";
 import axios from "axios";
 
 function App() {
@@ -19,9 +20,12 @@ function App() {
     setAnalysisComplete(false);
 
     try {
-      const response = await axios.post("http://localhost:5000/analyze", {
-        repoUrl,
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/analyze`,
+        {
+          repoUrl,
+        }
+      );
       setAnalysis(response.data);
       setAnalysisComplete(true);
     } catch (error: any) {
@@ -32,89 +36,56 @@ function App() {
 
   return (
     <>
-      <div className="flex w-full justify-between mt-10">
-        <form
-          onSubmit={handleSubmit}
-          className="flex flex-col items-center w-full"
-        >
-          <input
-            type="text"
-            value={repoUrl}
-            onChange={(e) => setRepoUrl(e.target.value)}
-            placeholder="GitHub repo URL"
-            required
-            className="w-[400px] px-3 py-2 border border-neutral-700 placeholder-neutral-500 text-white rounded-md bg-transparent focus:outline-none focus:ring-2 focus:ring-indigo-700"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 transition-all ease-in-out rounded-md w-[400px] mt-3 text-white font-medium"
+      {analysis || showLoading ? null : (
+        <div className="flex w-full flex-col items-center h-screen justify-center">
+          <p className="text-2xl text-white font-medium mb-5">
+            GitHub Repo Analyser
+          </p>
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-center w-fit bg-neutral-800 rounded-full px-3 py-3"
           >
-            {/* {loading ? "Analyzing..." : "Analyze"} */}
-            Analyze
-          </button>
-        </form>
-      </div>
+            <input
+              type="text"
+              value={repoUrl}
+              onChange={(e) => setRepoUrl(e.target.value)}
+              placeholder="GitHub repo URL"
+              required
+              className="w-[600px] text-white rounded-md bg-transparent focus:outline-none px-2"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="p-1 bg-indigo-600 hover:bg-indigo-700 rounded-full"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="lucide lucide-arrow-up"
+              >
+                <path d="m5 12 7-7 7 7" />
+                <path d="M12 19V5" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      )}
       {showLoading ? (
         <div className="w-full flex items-center justify-center my-28">
           <LoadingSplash onComplete={() => setShowLoading(false)} />
         </div>
       ) : (
-        <>Hi show anaylsis</>
+        <>{analysis ? <div>Hi </div> : null}</>
       )}
     </>
   );
 }
 
 export default App;
-
-const LoadingSplash = ({ onComplete }: { onComplete: () => void }) => {
-  const [messageIndex, setMessageIndex] = useState(0);
-  const messages = [
-    "Cloning Repo...",
-    "Analyzing Dependencies...",
-    "Generating Report...",
-    "Almost Done...",
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageIndex((prev) => {
-        if (prev === messages.length - 1) {
-          clearInterval(interval);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (messageIndex === messages.length - 1) {
-      const timer = setTimeout(() => {
-        onComplete();
-      }, 2000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [messageIndex, onComplete]);
-
-  return (
-    <>
-      <div className="flex items-center flex-col justify-center">
-        <div className="">
-          <div className="loader">
-            <span className="bar"></span>
-            <span className="bar"></span>
-            <span className="bar"></span>
-          </div>
-        </div>
-        <span className="text-lg font-semibold text-white">
-          {messages[messageIndex]}
-        </span>
-      </div>
-    </>
-  );
-};

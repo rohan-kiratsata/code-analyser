@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body{
-    @apply bg-neutral-900;
+    @apply bg-black/95;
 }
 .loader {
   display: flex;
