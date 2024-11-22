@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { LoadingSplash } from "@/components/loading-splash";
 import axios from "axios";
+import Link from "next/link";
+import LintReport from "@/components/lint-report";
 
 function App() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -27,12 +29,19 @@ function App() {
         }
       );
       setAnalysis(response.data);
+      console.log("analysis:", analysis);
       setAnalysisComplete(true);
     } catch (error: any) {
       setError(error.response?.data?.error || "An error occurred");
       setShowLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (analysis) {
+      console.log("analysis:", analysis);
+    }
+  }, [analysis]);
 
   return (
     <>
@@ -82,7 +91,47 @@ function App() {
           <LoadingSplash onComplete={() => setShowLoading(false)} />
         </div>
       ) : (
-        <>{analysis ? <div>Hi </div> : null}</>
+        <>
+          {analysis ? (
+            <div className="grid grid-cols-2 max-w-4xl mx-auto py-10 gap-3 font-mono">
+              <div className="bg-neutral-800 rounded-lg p-5 text-white text-sm">
+                <Link
+                  href={`https://github.com/${analysis.owner}/${analysis.name}`}
+                  className="text-sm underline text-green-300"
+                >
+                  github.com/{analysis.owner}/{analysis.name}
+                </Link>
+                <div className="flex justify-between flex-col mt-5 text-sm">
+                  <span className="text-neutral-400">DESCRIPTION</span>
+                  <span className="text-xs">{analysis.description}</span>
+                </div>
+
+                <div className="flex justify-between mt-5">
+                  <span className="text-neutral-400">SIZE</span>
+                  <span>{analysis.size}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">STARS</span>
+                  <span>{analysis.stars}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">FORKS</span>
+                  <span>{analysis.forks}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-neutral-400">OWNER</span>
+                  <Link
+                    href={`https://github.com/${analysis.owner}`}
+                    className="underline text-green-300"
+                  >
+                    {analysis.owner}
+                  </Link>
+                </div>
+              </div>
+              <LintReport lintAnalysis={analysis.lintAnalysis} />
+            </div>
+          ) : null}
+        </>
       )}
     </>
   );

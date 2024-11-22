@@ -2,6 +2,7 @@ const simpleGit = require("simple-git");
 const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
+const analyzeLint = require('./lintReport');
 
 async function analyzeRepo(repoUrl) {
   let tempDir;
@@ -37,6 +38,7 @@ async function analyzeRepo(repoUrl) {
     }
 
     const size = await calculateDirectorySize(tempDir);
+    const lintResults = await analyzeLint(tempDir);
 
     const result = {
       owner,
@@ -47,6 +49,12 @@ async function analyzeRepo(repoUrl) {
       dependencies: Object.keys(dependencies),
       devDependencies: Object.keys(devDependencies),
       size: formatBytes(size),
+      lintAnalysis: {
+        errorCount: lintResults.errorCount,
+        warningCount: lintResults.warningCount,
+        filesAnalyzed: lintResults.filesAnalyzed,
+        issues: lintResults.issues
+      }
     };
 
     // Schedule temp directory deletion after response is sent
