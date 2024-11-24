@@ -2,7 +2,7 @@ const simpleGit = require("simple-git");
 const fs = require("fs-extra");
 const path = require("path");
 const axios = require("axios");
-const analyzeLint = require('./lintReport');
+const {ESLint} = require("eslint")
 
 async function analyzeRepo(repoUrl) {
   let tempDir;
@@ -37,8 +37,10 @@ async function analyzeRepo(repoUrl) {
       throw new Error("Invalid repository: Contains only package.json");
     }
 
+    // Lint report
+    const lintResult = await runLintAnalysis(tempDir);
+
     const size = await calculateDirectorySize(tempDir);
-    const lintResults = await analyzeLint(tempDir);
 
     const result = {
       owner,
@@ -49,12 +51,7 @@ async function analyzeRepo(repoUrl) {
       dependencies: Object.keys(dependencies),
       devDependencies: Object.keys(devDependencies),
       size: formatBytes(size),
-      lintAnalysis: {
-        errorCount: lintResults.errorCount,
-        warningCount: lintResults.warningCount,
-        filesAnalyzed: lintResults.filesAnalyzed,
-        issues: lintResults.issues
-      }
+      lintReport: lintResult,
     };
 
     // Schedule temp directory deletion after response is sent
@@ -114,6 +111,78 @@ function formatBytes(bytes, decimals = 2) {
   const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+
+// function to run lint analysis
+async function runLintAnalysis(directory) {
+  try {
+    const eslint = new ESLint({
+      useEslintrc: false,
+      baseConfig: {
+        extends: ["eslint:recommended"],
+        parserOptions: {
+          ecmaVersion: 2020,
+          sourceType: "module",
+        },
+        env: {
+          node: true,
+          es6: true,
+        }
+      }
+    });
+
+    // Get all JS/TS files in the directory
+    const files = await getAllJsFiles(directory);
+    
+    // Run ESLint
+    const results = await eslint.lintFiles(files);
+    
+    // Format the results
+    return {
+      totalErrors: results.reduce((total, result) => total + result.errorCount, 0),
+      totalWarnings: results.reduce((total, result) => total + result.warningCount, 0),
+      files: results.map(result => ({
+        filePath: path.relative(directory, result.filePath),
+        errorCount: result.errorCount,
+        warningCount: result.warningCount,
+        messages: result.messages.map(msg => ({
+          ruleId: msg.ruleId,
+          severity: msg.severity === 1 ? 'warning' : 'error',
+          message: msg.message,
+          line: msg.line,
+          column: msg.column,
+        })),
+      })),
+    };
+  } catch (error) {
+    console.error("Lint analysis error:", error);
+    return {
+      error: 'Failed to run lint analysis',
+      details: error.message,
+    };
+  }
+}
+
+async function getAllJsFiles(directory) {
+  const files = [];
+  
+  async function traverse(dir) {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
+        await traverse(fullPath);
+      } else if (entry.isFile() && /\.js$|\.ts$/i.test(entry.name)) {
+        files.push(fullPath);
+      }
+    }
+  }
+  
+  await traverse(directory);
+  
+  return files;
 }
 
 module.exports = analyzeRepo;

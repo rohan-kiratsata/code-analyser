@@ -128,7 +128,7 @@ function App() {
                   </Link>
                 </div>
               </div>
-              <LintReport lintAnalysis={analysis.lintAnalysis} />
+              <LintReport lintReport={analysis.lintReport} />
             </div>
           ) : null}
         </>
