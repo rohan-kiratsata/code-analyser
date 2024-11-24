@@ -1,4 +1,12 @@
-import React, { useState } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
+import * as d3 from "d3";
+import DependencyBubbleChart from "./DependencyBubbleChart";
 
 interface LintMessage {
   ruleId: string;
@@ -20,7 +28,12 @@ interface LintReportProps {
     totalErrors: number;
     totalWarnings: number;
     files: LintFile[];
+    dependencies?: {
+      name: string;
+      lintIssues: number;
+    }[];
   };
+  onFileSelect?: (filePath: string) => void;
 }
 
 const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
@@ -29,6 +42,7 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
   >("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
+  const [selectedFileType, setSelectedFileType] = useState<string>("all");
 
   if (!lintReport) return null;
 
@@ -62,11 +76,57 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
     return matchesSearch && hasFilteredMessages;
   });
 
+  const fileTypes = useMemo(() => {
+    return (
+      lintReport.dependencies?.map((dependency) => ({
+        name: dependency.name,
+        lintIssues: dependency.lintIssues,
+      })) || []
+    );
+  }, [lintReport.dependencies]);
+
+  const DependencyLintView = ({ dependencies }: { dependencies: any }) => {
+    return (
+      <div className="mt-4 p-3 bg-neutral-700/50 rounded">
+        <h3 className="text-sm font-semibold mb-2">
+          Lint Issues by Dependency
+        </h3>
+        <DependencyBubbleChart dependencies={dependencies} />
+      </div>
+    );
+  };
+
+  const IssuesTrend = ({ files }: { files: any }) => {
+    const issuesByType = files.reduce((acc: any, file: any) => {
+      file.messages.forEach((msg: any) => {
+        const type = msg.ruleId || "unknown";
+        acc[type] = (acc[type] || 0) + 1;
+      });
+      return acc;
+    }, {});
+
+    return (
+      <div className="mt-4 p-3 bg-neutral-700/50 rounded">
+        <h3 className="text-sm font-semibold mb-2">Most Common Issues</h3>
+        <div className="space-y-2">
+          {Object.entries(issuesByType)
+            .sort(([, a], [, b]) => (b as number) - (a as number))
+            .slice(0, 5)
+            .map(([rule, count]) => (
+              <div key={rule} className="flex justify-between text-xs">
+                <span>{rule}</span>
+                <span>{String(count)}</span>
+              </div>
+            ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="bg-neutral-800 rounded-lg p-5 text-white text-sm">
+    <div className="bg-neutral-800 col-span-2 rounded-lg p-5 text-white text-sm ">
       <h2 className="text-lg font-semibold mb-4">Lint Analysis</h2>
 
-      {/* Summary and Controls */}
       <div className="flex flex-col gap-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex gap-4">
@@ -182,6 +242,9 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
           No lint issues found matching your criteria
         </div>
       )}
+
+      {/* <DependencyLintView dependencies={fileTypes} /> */}
+      <IssuesTrend files={lintReport.files} />
     </div>
   );
 };

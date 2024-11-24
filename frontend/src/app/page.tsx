@@ -5,6 +5,7 @@ import { LoadingSplash } from "@/components/loading-splash";
 import axios from "axios";
 import Link from "next/link";
 import LintReport from "@/components/lint-report";
+import DependencyList from "@/components/dependency-list";
 
 function App() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -128,6 +129,10 @@ function App() {
                   </Link>
                 </div>
               </div>
+              <DependencyList
+                dependencies={analysis.dependencies}
+                devDependencies={analysis.devDependencies}
+              />
               <LintReport lintReport={analysis.lintReport} />
             </div>
           ) : null}
