@@ -1,4 +1,4 @@
-const simpleGit = require("simple-git");
+// const simpleGit = require("simple-git");
 import simpleGit from "simple-git";
 import * as fs from 'fs'
 import path from "path";
