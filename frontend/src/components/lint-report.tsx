@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState } from "react";
 
 interface LintMessage {
   ruleId: string;
@@ -40,7 +34,6 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
   >("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedFiles, setExpandedFiles] = useState<Set<number>>(new Set());
-  const [selectedFileType, setSelectedFileType] = useState<string>("all");
 
   if (!lintReport) return null;
 
@@ -73,15 +66,6 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
     });
     return matchesSearch && hasFilteredMessages;
   });
-
-  const fileTypes = useMemo(() => {
-    return (
-      lintReport.dependencies?.map((dependency) => ({
-        name: dependency.name,
-        lintIssues: dependency.lintIssues,
-      })) || []
-    );
-  }, [lintReport.dependencies]);
 
   const IssuesTrend = ({ files }: { files: any }) => {
     const issuesByType = files.reduce((acc: any, file: any) => {

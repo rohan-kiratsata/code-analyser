@@ -53,16 +53,16 @@ const DependencyGraph: React.FC<DependencyGraphProps> = ({
     // Create force simulation
     const simulation = d3
       .forceSimulation(nodes as any)
-      .force("charge", d3.forceManyBody().strength(-200))
+      .force("charge", d3.forceManyBody().strength(-300))
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force(
         "link",
         d3
           .forceLink(links)
           .id((d: any) => d.id)
-          .distance(100)
+          .distance(150)
       )
-      .force("collision", d3.forceCollide().radius(30));
+      .force("collision", d3.forceCollide().radius(50));
 
     // Create links
     const link = svg
@@ -96,8 +96,8 @@ const DependencyGraph: React.FC<DependencyGraphProps> = ({
       .text((d) => (d.id === "root" ? "Project" : d.id))
       .attr("font-size", "10px")
       .attr("fill", "white")
-      .attr("dx", 12)
-      .attr("dy", 4);
+      .attr("text-anchor", "middle")
+      .attr("dy", (d) => (d.id === "root" ? -15 : 15));
 
     // Update positions on simulation tick
     simulation.on("tick", () => {
