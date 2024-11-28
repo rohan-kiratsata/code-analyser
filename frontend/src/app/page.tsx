@@ -6,6 +6,7 @@ import axios from "axios";
 import Link from "next/link";
 import LintReport from "@/components/lint-report";
 import DependencyList from "@/components/dependency-list";
+import DependencyGraph from "@/components/dependency-graph";
 
 function App() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -45,7 +46,7 @@ function App() {
   }, [analysis]);
 
   return (
-    <>
+    <div className="min-h-screen bg-black bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_24px]">
       {analysis || showLoading ? null : (
         <div className="flex w-full flex-col items-center h-screen justify-center">
           <p className="text-2xl text-white font-medium mb-5">
@@ -133,12 +134,16 @@ function App() {
                 dependencies={analysis.dependencies}
                 devDependencies={analysis.devDependencies}
               />
+              <DependencyGraph
+                dependencies={analysis.dependencies}
+                devDependencies={analysis.devDependencies}
+              />
               <LintReport lintReport={analysis.lintReport} />
             </div>
           ) : null}
         </>
       )}
-    </>
+    </div>
   );
 }
 
