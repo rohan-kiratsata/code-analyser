@@ -5,8 +5,6 @@ import React, {
   useRef,
   useEffect,
 } from "react";
-import * as d3 from "d3";
-import DependencyBubbleChart from "./DependencyBubbleChart";
 
 interface LintMessage {
   ruleId: string;
@@ -84,17 +82,6 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
       })) || []
     );
   }, [lintReport.dependencies]);
-
-  const DependencyLintView = ({ dependencies }: { dependencies: any }) => {
-    return (
-      <div className="mt-4 p-3 bg-neutral-700/50 rounded">
-        <h3 className="text-sm font-semibold mb-2">
-          Lint Issues by Dependency
-        </h3>
-        <DependencyBubbleChart dependencies={dependencies} />
-      </div>
-    );
-  };
 
   const IssuesTrend = ({ files }: { files: any }) => {
     const issuesByType = files.reduce((acc: any, file: any) => {
@@ -242,8 +229,6 @@ const LintReport: React.FC<LintReportProps> = ({ lintReport }) => {
           No lint issues found matching your criteria
         </div>
       )}
-
-      {/* <DependencyLintView dependencies={fileTypes} /> */}
       <IssuesTrend files={lintReport.files} />
     </div>
   );
