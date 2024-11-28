@@ -1,7 +1,9 @@
 const simpleGit = require("simple-git");
-const fs = require("fs-extra");
-const path = require("path");
-const axios = require("axios");
+import simpleGit from "simple-git";
+import * as fs from 'fs'
+import path from "path";
+import axios from "axios";
+
 const {ESLint} = require("eslint")
 
 async function analyzeRepo(repoUrl) {
