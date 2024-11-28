@@ -49,8 +49,11 @@ function App() {
     <div className="min-h-screen bg-black bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_24px]">
       {analysis || showLoading ? null : (
         <div className="flex w-full flex-col items-center h-screen justify-center">
-          <p className="text-2xl text-white font-medium mb-5">
+          <p className="text-2xl text-white font-medium">
             GitHub Repo Analyser
+          </p>
+          <p className=" mb-5 text-gray-400">
+            Get analysis and report of your node.js project
           </p>
           <form
             onSubmit={handleSubmit}
