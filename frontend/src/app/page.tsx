@@ -24,9 +24,17 @@ function App() {
     setAnalysisComplete(false);
 
     try {
-      const response = await axios.post(`/api/analyze`, {
-        repoUrl,
-      });
+      const response = await axios.post(
+        `/api/analyze`,
+        {
+          repoUrl,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
       setAnalysis(response.data);
       console.log("analysis:", analysis);
       setAnalysisComplete(true);
