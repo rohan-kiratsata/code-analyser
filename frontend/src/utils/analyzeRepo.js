@@ -187,4 +187,4 @@ async function getAllJsFiles(directory) {
   return files;
 }
 
-module.exports = analyzeRepo;
+export default analyzeRepo;
