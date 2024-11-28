@@ -24,12 +24,9 @@ function App() {
     setAnalysisComplete(false);
 
     try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_ENDPOINT}/analyze`,
-        {
-          repoUrl,
-        }
-      );
+      const response = await axios.post(`/api/analyze`, {
+        repoUrl,
+      });
       setAnalysis(response.data);
       console.log("analysis:", analysis);
       setAnalysisComplete(true);
