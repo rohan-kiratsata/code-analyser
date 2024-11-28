@@ -1,6 +1,6 @@
 // const simpleGit = require("simple-git");
 import simpleGit from "simple-git";
-import * as fs from 'fs'
+import fs from 'fs-extra'
 import path from "path";
 import axios from "axios";
 
